@@ -158,6 +158,14 @@ label {
   border-radius: var(--border-radius);
   font-size: 0.95em;
   border-left: 3px solid #95a5a6;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.other-diagnosis-list li:hover,
+.other-diagnosis-list li:focus {
+  background-color: #e0e7ef;
+  color: var(--secondary-color);
 }
 
 .warning-box {
@@ -166,7 +174,7 @@ label {
   background-color: #fff3cd;
   border: 1px solid #ffeeba;
   border-radius: var(--border-radius);
-  color: #856404;
+  color: #050377;
 }
 
 /* Emergency Warning */
