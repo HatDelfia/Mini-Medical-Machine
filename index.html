@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sistem Diagnosa Penyakit</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Sistem Diagnosa Penyakit Umum</h1>
+        <p>Pilih gejala yang Anda rasakan untuk mendapatkan diagnosa</p>
+      </header>
+
+      <main>
+        <div class="symptoms-section">
+          <h2>Pilih Gejala</h2>
+          <div class="symptoms-grid">
+            <div class="symptom-item">
+              <input type="checkbox" id="batuk" value="Batuk" />
+              <label for="batuk">Batuk</label>
+            </div>
+            <div class="symptom-item">
+              <input type="checkbox" id="pilek" value="Pilek" />
+              <label for="pilek">Pilek</label>
+            </div>
+            <div class="symptom-item">
+              <input type="checkbox" id="pusing" value="Pusing" />
+              <label for="pusing">Pusing</label>
+            </div>
+            <div class="symptom-item">
+              <input type="checkbox" id="demam" value="Demam" />
+              <label for="demam">Demam</label>
+            </div>
+            <div class="symptom-item">
+              <input
+                type="checkbox"
+                id="sakitTenggorokan"
+                value="Sakit Tenggorokan"
+              />
+              <label for="sakitTenggorokan">Sakit Tenggorokan</label>
+            </div>
+            <div class="symptom-item">
+              <input type="checkbox" id="mual" value="Mual" />
+              <label for="mual">Mual</label>
+            </div>
+            <div class="symptom-item">
+              <input type="checkbox" id="sakitPerut" value="Sakit Perut" />
+              <label for="sakitPerut">Sakit Perut</label>
+            </div>
+            <div class="symptom-item">
+              <input type="checkbox" id="sesakNapas" value="Sesak Napas" />
+              <label for="sesakNapas">Sesak Napas</label>
+            </div>
+            <div class="symptom-item">
+              <input type="checkbox" id="nyeriDada" value="Nyeri Dada" />
+              <label for="nyeriDada">Nyeri Dada</label>
+            </div>
+            <div class="symptom-item">
+              <input type="checkbox" id="letihLesu" value="Letih/Lesu" />
+              <label for="letihLesu">Letih/Lesu</label>
+            </div>
+            <div class="symptom-item">
+              <input type="checkbox" id="nyeriSendi" value="Nyeri Sendi" />
+              <label for="nyeriSendi">Nyeri Sendi</label>
+            </div>
+            <div class="symptom-item">
+              <input type="checkbox" id="ruamKulit" value="Ruam Kulit" />
+              <label for="ruamKulit">Ruam Kulit</label>
+            </div>
+          </div>
+
+          <button id="diagnoseBtn" class="diagnose-btn">Diagnosa</button>
+        </div>
+
+        <div class="result-section" id="resultSection">
+          <h2>Hasil Diagnosa</h2>
+          <div class="diagnosis-result" id="diagnosisResult">
+            <!-- Hasil diagnosa akan ditampilkan di sini -->
+          </div>
+          <div class="medication-result" id="medicationResult">
+            <!-- Rekomendasi obat akan ditampilkan di sini -->
+          </div>
+          <div class="warning-box" id="warningBox">
+            <!-- Peringatan akan ditampilkan di sini -->
+          </div>
+        </div>
+      </main>
+
+      <footer>
+        <p>
+          <strong>Peringatan:</strong> Hasil diagnosa ini hanya sebagai
+          referensi awal. Silakan konsultasi dengan dokter untuk diagnosis yang
+          lebih akurat.
+        </p>
+      </footer>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
