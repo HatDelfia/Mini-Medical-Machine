@@ -1,5 +1,90 @@
 // Database penyakit
 const diseasesDatabase = {
+  Demam: {
+    diagnosis:
+      "Kemungkinan penyakit:\n1. Demam ringan\n2. Infeksi virus\n3. Infeksi bakteri",
+    medications: [
+      ["Paracetamol", "500mg setiap 4-6 jam"],
+      ["Kompres hangat", "3-4 kali sehari"],
+      ["Minum air putih", "2-3 liter per hari"],
+    ],
+    severity: "low",
+  },
+  "Demam,Pusing": {
+    diagnosis:
+      "Kemungkinan penyakit:\n1. Tifus\n2. Infeksi virus\n3. Infeksi saluran pernapasan",
+    medications: [
+      ["Paracetamol", "500mg setiap 4-6 jam"],
+      ["Cairan elektrolit", "Minum banyak"],
+      ["Istirahat total", ""],
+    ],
+    severity: "medium",
+  },
+  "Demam,Sakit Tenggorokan": {
+    diagnosis: "Faringitis (Radang Tenggorokan)",
+    medications: [
+      ["Paracetamol", "500mg setiap 4-6 jam"],
+      ["Antibiotik", "Sesuai resep dokter"],
+      ["Berkumur air garam", "3-4 kali sehari"],
+    ],
+    severity: "medium",
+  },
+  "Demam,Letih/Lesu": {
+    diagnosis: "Kemungkinan penyakit:\n1. Anemia\n2. Infeksi virus\n3. Tifus",
+    medications: [
+      ["Paracetamol", "500mg setiap 4-6 jam"],
+      ["Vitamin B kompleks", "1 tablet per hari"],
+      ["Cairan elektrolit", "Minum banyak"],
+    ],
+    severity: "medium",
+  },
+  "Nyeri Sendi,Demam": {
+    diagnosis: "Chikungunya",
+    medications: [
+      ["Paracetamol", "500mg setiap 4-6 jam"],
+      ["Kompres hangat pada sendi", "3-4 kali sehari"],
+      ["Minum air putih", "2-3 liter per hari"],
+    ],
+    severity: "medium",
+  },
+  "Ruam Kulit,Demam": {
+    diagnosis: "Campak",
+    medications: [
+      ["Paracetamol", "500mg setiap 4-6 jam"],
+      ["Antihistamin", "Sesuai petunjuk dokter"],
+      ["Calamine lotion", "Oleskan pada ruam 3-4 kali sehari"],
+    ],
+    severity: "medium",
+  },
+  "Nyeri Dada": {
+    diagnosis:
+      "Kemungkinan penyakit:\n1. Gastritis\n2. Nyeri otot\n3. Masalah jantung (waspada jika disertai sesak)",
+    medications: [
+      ["Antasida", "10-20ml 3 kali sehari"],
+      ["Istirahat cukup", ""],
+      ["Segera ke dokter jika nyeri berat", ""],
+    ],
+    severity: "medium",
+  },
+  "Nyeri Dada,Letih/Lesu": {
+    diagnosis:
+      "Kemungkinan penyakit:\n1. Anemia\n2. Masalah jantung\n3. Kelelahan berat",
+    medications: [
+      ["Vitamin B12", "1 tablet per hari"],
+      ["Periksa ke dokter", "Jika keluhan berat"],
+      ["Istirahat cukup", ""],
+    ],
+    severity: "high",
+  },
+  "Pilek,Sakit Tenggorokan": {
+    diagnosis: "Rinitis dan Faringitis",
+    medications: [
+      ["Antihistamin", "1 tablet per hari"],
+      ["Dekongestan", "setiap 12 jam"],
+      ["Berkumur air garam", "3-4 kali sehari"],
+    ],
+    severity: "low",
+  },
   // Gejala tunggal
   Batuk: {
     diagnosis: "Kemungkinan penyakit:\n1. Batuk biasa\n2. Bronkitis\n3. Asma",
@@ -204,10 +289,10 @@ function getDiagnosis(symptoms) {
   // Urutkan diagnosa berdasarkan skor
   possibleDiagnoses.sort((a, b) => b.matchScore - a.matchScore);
 
-  // Ambil maksimal 3 diagnosa tambahan yang berbeda dengan diagnosa utama
-  const additionalDiagnoses = possibleDiagnoses
-    .filter((d) => d.originalSymptoms !== mainDiagnosis.originalSymptoms)
-    .slice(0, 3);
+  // Ambil semua diagnosa tambahan yang berbeda dengan diagnosa utama (tanpa batasan jumlah)
+  const additionalDiagnoses = possibleDiagnoses.filter(
+    (d) => d.originalSymptoms !== mainDiagnosis.originalSymptoms
+  );
 
   if (mainDiagnosis) {
     return {
@@ -244,10 +329,10 @@ function displayResults(diagnosis) {
   // Tampilkan bagian hasil
   resultSection.classList.add("active");
 
-  // Tampilkan diagnosa utama dan kemungkinan lainnya
+  // Tampilkan diagnosa utama dan kemungkinan lainnya (klik untuk detail obat)
   let diagnosisHtml = `
     <h3>Diagnosa Utama:</h3>
-    <p class="main-diagnosis">${diagnosis.mainDiagnosis.diagnosis}</p>
+    <p class="main-diagnosis" id="mainDiagnosis">${diagnosis.mainDiagnosis.diagnosis}</p>
   `;
 
   if (
@@ -255,24 +340,58 @@ function displayResults(diagnosis) {
     diagnosis.additionalDiagnoses.length > 0
   ) {
     diagnosisHtml += `
-      <h4 class="other-diagnosis-title">Kemungkinan Lain:</h4>
+      <h4 class="other-diagnosis-title">Kemungkinan Lain (klik untuk detail obat):</h4>
       <ul class="other-diagnosis-list">
     `;
-    diagnosis.additionalDiagnoses.forEach((d) => {
-      diagnosisHtml += `<li>${d.diagnosis}</li>`;
+    diagnosis.additionalDiagnoses.forEach((d, idx) => {
+      // Set data-idx agar bisa diidentifikasi saat diklik
+      diagnosisHtml += `<li class="other-diagnosis-item" data-idx="${idx}">${d.diagnosis}</li>`;
     });
     diagnosisHtml += "</ul>";
   }
 
   diagnosisResult.innerHTML = diagnosisHtml;
 
-  // Tampilkan rekomendasi obat
+  // Tampilkan rekomendasi obat untuk diagnosa utama
   let medicationHtml = "<h3>Rekomendasi Pengobatan:</h3><ul>";
   diagnosis.medications.forEach((med) => {
     medicationHtml += `<li><strong>${med[0]}</strong>: ${med[1]}</li>`;
   });
   medicationHtml += "</ul>";
   medicationResult.innerHTML = medicationHtml;
+
+  // Tambahkan event listener pada kemungkinan diagnosa lain
+  const otherDiagnosisItems = document.querySelectorAll(
+    ".other-diagnosis-item"
+  );
+  otherDiagnosisItems.forEach((item) => {
+    item.addEventListener("click", function () {
+      const idx = parseInt(this.getAttribute("data-idx"));
+      const selected = diagnosis.additionalDiagnoses[idx];
+      // Tampilkan obat dan dosis untuk diagnosa yang diklik
+      let medHtml = `<h3>Rekomendasi Pengobatan untuk:</h3><div class='main-diagnosis'>${selected.diagnosis}</div><ul>`;
+      selected.medications.forEach((med) => {
+        medHtml += `<li><strong>${med[0]}</strong>: ${med[1]}</li>`;
+      });
+      medHtml += "</ul>";
+      medicationResult.innerHTML = medHtml;
+    });
+  });
+
+  // Tambahkan event listener pada diagnosa utama agar bisa diklik kembali
+  const mainDiagnosisEl = document.getElementById("mainDiagnosis");
+  if (mainDiagnosisEl) {
+    mainDiagnosisEl.style.cursor = "pointer";
+    mainDiagnosisEl.title = "Klik untuk menampilkan kembali obat utama";
+    mainDiagnosisEl.addEventListener("click", function () {
+      let medHtml = `<h3>Rekomendasi Pengobatan:</h3><ul>`;
+      diagnosis.mainDiagnosis.medications.forEach((med) => {
+        medHtml += `<li><strong>${med[0]}</strong>: ${med[1]}</li>`;
+      });
+      medHtml += "</ul>";
+      medicationResult.innerHTML = medHtml;
+    });
+  }
 
   // Tampilkan peringatan berdasarkan severity
   let warningMessage = "";
