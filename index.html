@@ -7,7 +7,28 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <div class="container">
+    <!-- Splash screen / halaman pembuka -->
+    <div
+      id="splashScreen"
+      class="splash-screen"
+      role="dialog"
+      aria-labelledby="splashTitle"
+      aria-modal="true"
+    >
+      <div class="splash-content" role="document">
+        <div class="splash-inner">
+          <div class="byline" id="splashBy">By : Muhammad Hatta</div>
+          <h1 class="splash-title" id="splashTitle">
+            Pengecek Gejala : Solusi Cepat Diagnosa Penyakit
+          </h1>
+          <button id="startBtn" class="start-btn" aria-label="Mulai">
+            Mulai
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="container" id="mainContainer" aria-hidden="true">
       <header>
         <h1>Sistem Diagnosa Penyakit Umum</h1>
         <p>Pilih gejala yang Anda rasakan untuk mendapatkan diagnosa</p>
@@ -17,23 +38,23 @@
         <div class="symptoms-section">
           <h2>Pilih Gejala</h2>
           <div class="symptoms-grid">
-            <div class="symptom-item">
+            <div class="symptom-item" data-symptom="Batuk">
               <input type="checkbox" id="batuk" value="Batuk" />
               <label for="batuk">Batuk</label>
             </div>
-            <div class="symptom-item">
+            <div class="symptom-item" data-symptom="Pilek">
               <input type="checkbox" id="pilek" value="Pilek" />
               <label for="pilek">Pilek</label>
             </div>
-            <div class="symptom-item">
+            <div class="symptom-item" data-symptom="Pusing">
               <input type="checkbox" id="pusing" value="Pusing" />
               <label for="pusing">Pusing</label>
             </div>
-            <div class="symptom-item">
+            <div class="symptom-item" data-symptom="Demam">
               <input type="checkbox" id="demam" value="Demam" />
               <label for="demam">Demam</label>
             </div>
-            <div class="symptom-item">
+            <div class="symptom-item" data-symptom="Sakit Tenggorokan">
               <input
                 type="checkbox"
                 id="sakitTenggorokan"
@@ -41,31 +62,31 @@
               />
               <label for="sakitTenggorokan">Sakit Tenggorokan</label>
             </div>
-            <div class="symptom-item">
+            <div class="symptom-item" data-symptom="Mual">
               <input type="checkbox" id="mual" value="Mual" />
               <label for="mual">Mual</label>
             </div>
-            <div class="symptom-item">
+            <div class="symptom-item" data-symptom="Sakit Perut">
               <input type="checkbox" id="sakitPerut" value="Sakit Perut" />
               <label for="sakitPerut">Sakit Perut</label>
             </div>
-            <div class="symptom-item">
+            <div class="symptom-item" data-symptom="Sesak Napas">
               <input type="checkbox" id="sesakNapas" value="Sesak Napas" />
               <label for="sesakNapas">Sesak Napas</label>
             </div>
-            <div class="symptom-item">
+            <div class="symptom-item" data-symptom="Nyeri Dada">
               <input type="checkbox" id="nyeriDada" value="Nyeri Dada" />
               <label for="nyeriDada">Nyeri Dada</label>
             </div>
-            <div class="symptom-item">
+            <div class="symptom-item" data-symptom="Letih/Lesu">
               <input type="checkbox" id="letihLesu" value="Letih/Lesu" />
               <label for="letihLesu">Letih/Lesu</label>
             </div>
-            <div class="symptom-item">
+            <div class="symptom-item" data-symptom="Nyeri Sendi">
               <input type="checkbox" id="nyeriSendi" value="Nyeri Sendi" />
               <label for="nyeriSendi">Nyeri Sendi</label>
             </div>
-            <div class="symptom-item">
+            <div class="symptom-item" data-symptom="Ruam Kulit">
               <input type="checkbox" id="ruamKulit" value="Ruam Kulit" />
               <label for="ruamKulit">Ruam Kulit</label>
             </div>
