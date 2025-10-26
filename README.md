@@ -2,7 +2,7 @@
 
 Latar Belakang Singkat
 ------------------------
-Dari pengalaman saya yang saat ini mengikuti organisasi PMR(Palang Merah Remaja) dan juga satuan karya pramuka yang berfokus dibidang kesehatan(Saka Bakti Husada) menjadi referensi awal saya untuk membuat website/aplikasi ini, ditambah lagi keluhan banyak orang yang sedang sakit, saat browsing mencari penyakit yang dialaminya sangat rumit bahkan kadang tak akurat. Oleh karena itu, saya yang mempunyai skill programming, membuat website ini walaupun dibantu dengan kecerdasan buatan.
+Dari pengalaman saya yang saat ini mengikuti organisasi PMR(Palang Merah Remaja) dan juga satuan karya pramuka yang berfokus dibidang kesehatan(Saka Bakti Husada) menjadi referensi awal saya untuk membuat website/aplikasi ini, ditambah lagi keluhan banyak orang yang sedang sakit, saat browsing mencari penyakit yang dialaminya sangat rumit bahkan kadang tak akurat. Oleh karena itu, saya yang mempunyai skill programming, membuat website ini walaupun sedikit dibantu dengan kecerdasan buatan.
 
 Deskripsi
 -----------------
