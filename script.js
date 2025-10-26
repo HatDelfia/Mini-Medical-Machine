@@ -1,4 +1,7 @@
-// Database penyakit
+// script.js — logika diagnosa yang diperbarui untuk mendukung multi-select
+// (pastikan file HTML & CSS Anda sudah memuat elemen .symptom-item seperti sebelumnya)
+
+/* Database penyakit (diperbarui: ditambahkan Ruam Kulit, Nyeri Sendi, Sesak Napas) */
 const diseasesDatabase = {
   Demam: {
     diagnosis:
@@ -56,6 +59,34 @@ const diseasesDatabase = {
     ],
     severity: "medium",
   },
+
+  // Tambahan: entri tunggal untuk "Ruam Kulit"
+  "Ruam Kulit": {
+    diagnosis: "Dermatitis",
+    medications: [
+      ["Kompres sejuk", "2-3 kali sehari bila gatal"],
+      ["Emolien / pelembap", "Oles sesuai kebutuhan"],
+      ["Antihistamin oral", "Jika gatal hebat, sesuai petunjuk"],
+      ["Konsultasi dokter kulit", "Jika ruam meluas atau berisi nanah"],
+    ],
+    severity: "low",
+  },
+
+  // Tambahan: entri tunggal untuk "Nyeri Sendi"
+  "Nyeri Sendi": {
+    diagnosis: "Cedera sendi (sprain/strain) atau nyeri otot",
+    medications: [
+      [
+        "Istirahat + RICE (Rest, Ice, Compression, Elevation)",
+        "Segera lakukan jika cedera",
+      ],
+      ["Analgesik ringan (mis. Paracetamol/NSAID)", "Sesuai dosis"],
+      ["Kompres hangat setelah 48 jam", "Jika tidak bengkak akut"],
+      ["Periksa ke dokter jika nyeri berat atau pembengkakan signifikan", ""],
+    ],
+    severity: "low",
+  },
+
   "Nyeri Dada": {
     diagnosis:
       "Kemungkinan penyakit:\n1. Gastritis\n2. Nyeri otot\n3. Masalah jantung (waspada jika disertai sesak)",
@@ -85,7 +116,7 @@ const diseasesDatabase = {
     ],
     severity: "low",
   },
-  // Gejala tunggal
+
   Batuk: {
     diagnosis: "Kemungkinan penyakit:\n1. Batuk biasa\n2. Bronkitis\n3. Asma",
     medications: [
@@ -115,25 +146,28 @@ const diseasesDatabase = {
     severity: "low",
   },
 
-  // Kombinasi gejala
-  "Batuk,Pilek": {
-    diagnosis: "Flu (Common Cold)",
-    medications: [
-      ["Paracetamol", "500mg setiap 4-6 jam"],
-      ["Pseudoephedrine", "60mg setiap 4-6 jam"],
-      ["Vitamin C", "500mg 2 kali sehari"],
-    ],
-    severity: "low",
-  },
+  // Prioritaskan Asma untuk sesak napas:
   "Batuk,Sesak Napas": {
-    diagnosis: "Asma atau Bronkitis",
+    diagnosis: "Asma (lebih mungkin) atau Bronkitis",
     medications: [
-      ["Bronkodilator", "Sesuai resep dokter"],
-      ["Inhaler", "Saat diperlukan"],
-      ["Anti-inflamasi", "Sesuai resep dokter"],
+      ["Bronkodilator / Inhaler", "Sesuai resep dokter"],
+      ["Inhaler reliever (salbutamol)", "Saat diperlukan"],
+      ["Konsultasi dokter jika serangan berulang", ""],
     ],
     severity: "medium",
   },
+
+  // Tambahan: entri tunggal untuk "Sesak Napas" -> utamakan Asma
+  "Sesak Napas": {
+    diagnosis: "Asma",
+    medications: [
+      ["Inhaler bronkodilator (salbutamol)", "Gunakan sesuai resep"],
+      ["Periksa ke dokter untuk manajemen jangka panjang", ""],
+      ["Jika sesak parah atau disertai nyeri dada, pingsan, segera ke UGD", ""],
+    ],
+    severity: "high",
+  },
+
   "Mual,Sakit Perut": {
     diagnosis: "Diare",
     medications: [
@@ -152,6 +186,15 @@ const diseasesDatabase = {
       ["Probiotik", "2 kali sehari"],
     ],
     severity: "high",
+  },
+  "Batuk,Pilek": {
+    diagnosis: "Flu (Common Cold)",
+    medications: [
+      ["Paracetamol", "500mg setiap 4-6 jam"],
+      ["Pseudoephedrine", "60mg setiap 4-6 jam"],
+      ["Vitamin C", "500mg 2 kali sehari"],
+    ],
+    severity: "low",
   },
   "Batuk,Pilek,Demam": {
     diagnosis: "Infeksi Saluran Pernapasan Atas (ISPA)",
@@ -190,161 +233,273 @@ const diseasesDatabase = {
   },
 };
 
-// Event Listeners
+/* ---------------------------
+   Helper & inisialisasi DOM
+   --------------------------- */
 document.addEventListener("DOMContentLoaded", () => {
   const diagnoseBtn = document.getElementById("diagnoseBtn");
-  diagnoseBtn.addEventListener("click", performDiagnosis);
+  if (diagnoseBtn) diagnoseBtn.addEventListener("click", performDiagnosis);
+
+  // Splash Start Button (jika ada)
+  const startBtn = document.getElementById("startBtn");
+  const splash = document.getElementById("splashScreen");
+  const mainContainer = document.getElementById("mainContainer");
+  if (startBtn && splash && mainContainer) {
+    startBtn.addEventListener("click", () => {
+      splash.classList.add("splash-hidden");
+      setTimeout(() => {
+        splash.style.display = "none";
+        mainContainer.setAttribute("aria-hidden", "false");
+        const firstCheckbox = document.querySelector('input[type="checkbox"]');
+        if (firstCheckbox) firstCheckbox.focus();
+      }, 480);
+    });
+    startBtn.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        startBtn.click();
+      }
+    });
+  }
+
+  // Jika fungsi enhanceSymptomItems tersedia, jalankan (memungkinkan klik area besar)
+  if (typeof enhanceSymptomItems === "function") enhanceSymptomItems();
 });
 
-// Fungsi utama untuk melakukan diagnosa
-function performDiagnosis() {
-  const selectedSymptoms = getSelectedSymptoms();
-  if (selectedSymptoms.length === 0) {
-    alert("Silakan pilih minimal satu gejala.");
-    return;
-  }
+/* enable klik pada seluruh .symptom-item (jika Anda memakai markup item seperti sebelumnya) */
+function enhanceSymptomItems() {
+  const items = document.querySelectorAll(".symptom-item");
+  items.forEach((item) => {
+    item.setAttribute("tabindex", "0");
+    item.setAttribute("role", "button");
+    item.setAttribute("aria-pressed", "false");
+    const checkbox = item.querySelector('input[type="checkbox"]');
+    if (!checkbox) return;
 
-  const diagnosis = getDiagnosis(selectedSymptoms);
-  displayResults(diagnosis);
+    item.addEventListener("click", (e) => {
+      const tag = e.target.tagName;
+      if (tag === "INPUT" || tag === "LABEL") return;
+      checkbox.checked = !checkbox.checked;
+      item.setAttribute("aria-pressed", checkbox.checked ? "true" : "false");
+      checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+
+    item.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        checkbox.checked = !checkbox.checked;
+        item.setAttribute("aria-pressed", checkbox.checked ? "true" : "false");
+        checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    });
+
+    checkbox.addEventListener("change", () => {
+      item.setAttribute("aria-pressed", checkbox.checked ? "true" : "false");
+    });
+  });
 }
 
-// Fungsi untuk mendapatkan gejala yang dipilih
+/* ---------------------------
+   Fungsi Diagnosa
+   --------------------------- */
+
+// Ambil gejala yang dipilih
 function getSelectedSymptoms() {
-  const checkboxes = document.querySelectorAll(
-    'input[type="checkbox"]:checked'
-  );
-  return Array.from(checkboxes).map((cb) => cb.value);
+  const checked = document.querySelectorAll('input[type="checkbox"]:checked');
+  return Array.from(checked)
+    .map((c) => c.value.trim())
+    .filter(Boolean);
 }
 
-// Fungsi untuk mendapatkan diagnosa berdasarkan gejala
+// Normalisasi key (untuk membandingkan entri DB)
+function normalizeKey(keyOrArray) {
+  let arr = [];
+  if (Array.isArray(keyOrArray)) {
+    arr = keyOrArray.map((s) => String(s).trim());
+  } else {
+    arr = String(keyOrArray)
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+  return arr.sort().join(",");
+}
+
+// Konversi severity -> skor
+function getSeverityScore(sev) {
+  switch (sev) {
+    case "emergency":
+      return 4;
+    case "high":
+      return 3;
+    case "medium":
+      return 2;
+    case "low":
+      return 1;
+    default:
+      return 0;
+  }
+}
+
+// Menghitung diagnosa berdasarkan gejala (ditingkatkan untuk multi-select)
 function getDiagnosis(symptoms) {
-  const sortedSymptoms = symptoms.sort().join(",");
-  let possibleDiagnoses = [];
-  let mainDiagnosis = null;
-  let highestSeverityScore = -1;
+  const userSymptoms = Array.from(
+    new Set((symptoms || []).map((s) => s.trim()))
+  ).filter(Boolean);
+  const normalizedUserKey = normalizeKey(userSymptoms);
+  const userSize = userSymptoms.length;
+  const userSet = new Set(userSymptoms);
 
-  // Fungsi untuk menghitung skor keparahan
-  function getSeverityScore(severity) {
-    switch (severity) {
-      case "emergency":
-        return 4;
-      case "high":
-        return 3;
-      case "medium":
-        return 2;
-      case "low":
-        return 1;
-      default:
-        return 0;
+  // 1) Exact match prioritas tinggi
+  for (const [dbKey, diag] of Object.entries(diseasesDatabase)) {
+    if (normalizeKey(dbKey) === normalizedUserKey) {
+      return {
+        mainDiagnosis: {
+          ...diag,
+          originalSymptoms: dbKey,
+          matchMetrics: { exactMatch: true },
+        },
+        additionalDiagnoses: [],
+        medications: diag.medications || [],
+        severity: diag.severity || "unknown",
+      };
     }
   }
 
-  // Fungsi untuk menghitung skor kecocokan gejala
-  function getMatchScore(dbSymptoms, userSymptoms) {
-    const dbSymptomSet = new Set(dbSymptoms.split(","));
-    const userSymptomSet = new Set(userSymptoms);
+  // 2) Kalkulasi skor untuk semua entry yang memiliki minimal 1 kecocokan
+  const possible = [];
+
+  for (const [dbKey, diag] of Object.entries(diseasesDatabase)) {
+    const dbArr = dbKey
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const dbSize = dbArr.length;
+    const dbSet = new Set(dbArr);
+
+    // hitung matchCount
     let matchCount = 0;
-    for (const symptom of dbSymptomSet) {
-      if (userSymptomSet.has(symptom)) {
-        matchCount++;
-      }
-    }
+    for (const s of dbSet) if (userSet.has(s)) matchCount++;
+
+    if (matchCount === 0) continue; // tidak cocok sama sekali -> skip
+
+    const coverage = dbSize === 0 ? 0 : matchCount / dbSize; // seberapa lengkap DB gejala terpenuhi
+    const relevance = userSize === 0 ? 0 : matchCount / userSize; // seberapa signifikan terhadap input user
+    const severityScore = getSeverityScore(diag.severity);
+
+    // bonus jika DB symptoms adalah subset dari userSymptoms (semua gejala DB ada di input user)
+    const dbIsSubsetOfUser = dbArr.every((s) => userSet.has(s));
+    let bonus = 1;
+    if (dbIsSubsetOfUser) bonus *= 1.4;
+
+    // jika coverage==1 dan relevance==1 (perfect match subset-equal), beri bonus lebih besar
+    if (coverage === 1 && relevance === 1) bonus *= 1.2;
+
+    // penalti ringan bila DB punya lebih banyak gejala dari user (dbSize > userSize) dan tidak semua terpenuhi
+    if (dbSize > userSize && coverage < 1) bonus *= 0.85;
+
+    // skor akhir (formula bisa disesuaikan): coverage * relevance * (matchCount + severityScore) * bonus
+    const baseScore = coverage * relevance * (matchCount + severityScore);
+    const overallScore = baseScore * bonus;
+
+    possible.push({
+      ...diag,
+      originalSymptoms: dbKey,
+      matchMetrics: {
+        matchCount,
+        dbSize,
+        cakupan: coverage, // coverage -> cakupan (disimpan tetap detail)
+        relevansi: relevance, // relevance -> relevansi
+        dbIsSubsetOfUser,
+      },
+      severityScore,
+      matchScore: overallScore,
+    });
+  }
+
+  // Jika tidak ada possible (seharusnya jarang), fallback ke output default
+  if (possible.length === 0) {
     return {
-      matchCount,
-      coverage: matchCount / dbSymptomSet.size,
-      relevance: matchCount / userSymptomSet.size,
-    };
-  }
-
-  // Cek semua kombinasi dalam database
-  for (const [dbSymptoms, diagnosis] of Object.entries(diseasesDatabase)) {
-    const matchScore = getMatchScore(dbSymptoms, symptoms);
-    const severityScore = getSeverityScore(diagnosis.severity);
-
-    // Jika ada kecocokan gejala
-    if (matchScore.matchCount > 0) {
-      const overallScore =
-        matchScore.coverage *
-        matchScore.relevance *
-        (matchScore.matchCount + severityScore);
-
-      possibleDiagnoses.push({
-        ...diagnosis,
-        matchScore: overallScore,
-        originalSymptoms: dbSymptoms,
-      });
-
-      // Update diagnosa utama jika skor lebih tinggi
-      if (overallScore > highestSeverityScore) {
-        highestSeverityScore = overallScore;
-        mainDiagnosis = {
-          ...diagnosis,
-          matchScore: overallScore,
-          originalSymptoms: dbSymptoms,
-        };
-      }
-    }
-  }
-
-  // Urutkan diagnosa berdasarkan skor
-  possibleDiagnoses.sort((a, b) => b.matchScore - a.matchScore);
-
-  // Ambil semua diagnosa tambahan yang berbeda dengan diagnosa utama (tanpa batasan jumlah)
-  const additionalDiagnoses = possibleDiagnoses.filter(
-    (d) => d.originalSymptoms !== mainDiagnosis.originalSymptoms
-  );
-
-  if (mainDiagnosis) {
-    return {
-      mainDiagnosis: mainDiagnosis,
-      additionalDiagnoses: additionalDiagnoses,
-      medications: mainDiagnosis.medications,
-      severity: mainDiagnosis.severity,
-    };
-  }
-
-  // Jika tidak ada diagnosa yang cocok
-  return {
-    mainDiagnosis: {
-      diagnosis: "Tidak dapat menentukan diagnosa yang spesifik",
-    },
-    additionalDiagnoses: [],
-    medications: [
-      [
-        "Konsultasi dengan dokter",
-        "Segera kunjungi dokter untuk pemeriksaan lebih lanjut",
+      mainDiagnosis: {
+        diagnosis: "Tidak dapat menentukan diagnosa yang spesifik",
+      },
+      additionalDiagnoses: [],
+      medications: [
+        [
+          "Konsultasi dengan dokter",
+          "Segera kunjungi dokter untuk pemeriksaan lebih lanjut",
+        ],
       ],
-    ],
-    severity: "unknown",
+      severity: "unknown",
+    };
+  }
+
+  // Urutkan hasil berdasarkan skor
+  possible.sort((a, b) => b.matchScore - a.matchScore);
+
+  // Ambil diagnosa utama = skor tertinggi
+  const mainDiagnosis = possible[0];
+
+  // Ambil beberapa kemungkinan lain (top 4 selain utama) untuk disajikan
+  const additionalDiagnoses = possible.slice(1, 5);
+
+  return {
+    mainDiagnosis,
+    additionalDiagnoses,
+    medications: mainDiagnosis.medications || [],
+    severity: mainDiagnosis.severity || "unknown",
   };
 }
 
-// Fungsi untuk menampilkan hasil diagnosa
+/* ---------------------------
+   Menampilkan hasil ke UI
+   --------------------------- */
 function displayResults(diagnosis) {
   const resultSection = document.getElementById("resultSection");
   const diagnosisResult = document.getElementById("diagnosisResult");
   const medicationResult = document.getElementById("medicationResult");
   const warningBox = document.getElementById("warningBox");
 
-  // Tampilkan bagian hasil
   resultSection.classList.add("active");
 
-  // Tampilkan diagnosa utama dan kemungkinan lainnya (klik untuk detail obat)
+  // Main diagnosis (label lebih ringkas)
+  const mainDiagText =
+    diagnosis.mainDiagnosis.diagnosis || "Tidak ada diagnosa spesifik";
   let diagnosisHtml = `
-    <h3>Diagnosa Utama:</h3>
-    <p class="main-diagnosis" id="mainDiagnosis">${diagnosis.mainDiagnosis.diagnosis}</p>
+    <h3>Diagnosa:</h3>
+    <p class="main-diagnosis" id="mainDiagnosis">${mainDiagText}</p>
   `;
 
+  // Tampilkan beberapa metrik kecil (ringkas) di bawah diagnosa utama untuk transparansi
+  if (diagnosis.mainDiagnosis.matchMetrics) {
+    const m = diagnosis.mainDiagnosis.matchMetrics;
+    // jika tersedia metrik matchCount/dbSize/relevansi tampilkan ringkas dengan label singkat
+    if (m.matchCount !== undefined) {
+      // catatan: data metrik utama disimpan di matchMetrics (cakupan/relevansi) untuk entri yang dihitung
+      // gunakan cakupan/relevansi jika tersedia (beberapa exactMatch mungkin tidak punya metrik detil)
+      const cakupanPct =
+        (m.cakupan !== undefined ? m.cakupan : m.coverage || 0) * 100;
+      const relevansiPct =
+        (m.relevansi !== undefined ? m.relevansi : m.relevance || 0) * 100;
+      diagnosisHtml += `<div style="margin-top:8px;font-size:0.93rem;color:#4b5563">Kecocokan: ${
+        m.matchCount
+      }/${m.dbSize} (Cakup ${Math.round(cakupanPct)}%, Rel ${Math.round(
+        relevansiPct
+      )}%)</div>`;
+    }
+  }
+
+  // Additional diagnoses list (label lebih ringkas)
   if (
     diagnosis.additionalDiagnoses &&
     diagnosis.additionalDiagnoses.length > 0
   ) {
     diagnosisHtml += `
-      <h4 class="other-diagnosis-title">Kemungkinan Lain (klik untuk detail obat):</h4>
+      <h4 class="other-diagnosis-title" style="margin-top:14px">Kemungkinan:</h4>
       <ul class="other-diagnosis-list">
     `;
     diagnosis.additionalDiagnoses.forEach((d, idx) => {
-      // Set data-idx agar bisa diidentifikasi saat diklik
+      // sertakan atribut data-idx agar dapat ditangani
       diagnosisHtml += `<li class="other-diagnosis-item" data-idx="${idx}">${d.diagnosis}</li>`;
     });
     diagnosisHtml += "</ul>";
@@ -352,15 +507,15 @@ function displayResults(diagnosis) {
 
   diagnosisResult.innerHTML = diagnosisHtml;
 
-  // Tampilkan rekomendasi obat untuk diagnosa utama
+  // Medication untuk main
   let medicationHtml = "<h3>Rekomendasi Pengobatan:</h3><ul>";
-  diagnosis.medications.forEach((med) => {
+  (diagnosis.medications || []).forEach((med) => {
     medicationHtml += `<li><strong>${med[0]}</strong>: ${med[1]}</li>`;
   });
   medicationHtml += "</ul>";
   medicationResult.innerHTML = medicationHtml;
 
-  // Tambahkan event listener pada kemungkinan diagnosa lain
+  // Event untuk kemungkinan lain
   const otherDiagnosisItems = document.querySelectorAll(
     ".other-diagnosis-item"
   );
@@ -368,9 +523,8 @@ function displayResults(diagnosis) {
     item.addEventListener("click", function () {
       const idx = parseInt(this.getAttribute("data-idx"));
       const selected = diagnosis.additionalDiagnoses[idx];
-      // Tampilkan obat dan dosis untuk diagnosa yang diklik
-      let medHtml = `<h3>Rekomendasi Pengobatan untuk:</h3><div class='main-diagnosis'>${selected.diagnosis}</div><ul>`;
-      selected.medications.forEach((med) => {
+      let medHtml = `<h3>Rekomendasi Pengobatan untuk:</h3><div class='main-diagnosis' style="margin-bottom:8px">${selected.diagnosis}</div><ul>`;
+      (selected.medications || []).forEach((med) => {
         medHtml += `<li><strong>${med[0]}</strong>: ${med[1]}</li>`;
       });
       medHtml += "</ul>";
@@ -378,14 +532,14 @@ function displayResults(diagnosis) {
     });
   });
 
-  // Tambahkan event listener pada diagnosa utama agar bisa diklik kembali
+  // Klik pada diagnosa utama untuk menampilkan obat utama kembali
   const mainDiagnosisEl = document.getElementById("mainDiagnosis");
-  if (mainDiagnosisEl) {
+  if (mainDiagnosisEl && diagnosis.mainDiagnosis.medications) {
     mainDiagnosisEl.style.cursor = "pointer";
     mainDiagnosisEl.title = "Klik untuk menampilkan kembali obat utama";
     mainDiagnosisEl.addEventListener("click", function () {
       let medHtml = `<h3>Rekomendasi Pengobatan:</h3><ul>`;
-      diagnosis.mainDiagnosis.medications.forEach((med) => {
+      (diagnosis.mainDiagnosis.medications || []).forEach((med) => {
         medHtml += `<li><strong>${med[0]}</strong>: ${med[1]}</li>`;
       });
       medHtml += "</ul>";
@@ -393,7 +547,7 @@ function displayResults(diagnosis) {
     });
   }
 
-  // Tampilkan peringatan berdasarkan severity
+  // Peringatan berdasar severity
   let warningMessage = "";
   switch (diagnosis.severity) {
     case "emergency":
@@ -418,4 +572,17 @@ function displayResults(diagnosis) {
       warningBox.style.backgroundColor = "#fff3cd";
   }
   warningBox.innerHTML = warningMessage;
+}
+
+/* ---------------------------
+   Fungsi utama untuk dipanggil oleh tombol Diagnosa
+   --------------------------- */
+function performDiagnosis() {
+  const selected = getSelectedSymptoms();
+  if (selected.length === 0) {
+    alert("Silakan pilih minimal satu gejala.");
+    return;
+  }
+  const diagnosis = getDiagnosis(selected);
+  displayResults(diagnosis);
 }
